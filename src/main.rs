@@ -1,25 +1,60 @@
 use anyhow::{Context, Result};
-use std::{env, path::PathBuf, str::FromStr};
+use std::{
+    env, fs,
+    io::{stdin, stdout, Write},
+    path::PathBuf,
+    process,
+    str::FromStr,
+};
+
+use crate::lexer::Lexer;
+
+mod lexer;
 
 fn main() -> Result<()> {
-    // Skip the file name
+    // Skip the current exe name
     let args: Vec<String> = env::args().skip(1).collect();
     if args.len() > 1 {
         println!("Usage: rlox [script]");
+        process::exit(64);
     } else if args.len() == 1 {
         let path = PathBuf::from_str(&args[0]).context("convert String to PathBuf")?;
-        run_file(path);
+        run_file(path)?;
     } else {
-        run_prompt();
+        run_prompt()?;
     };
 
     Ok(())
 }
 
-fn run_file(path: PathBuf) {
-    todo!()
+fn run_file(path: PathBuf) -> Result<()> {
+    let src_file = fs::read_to_string(path)?;
+
+    run(src_file);
+
+    Ok(())
 }
 
-fn run_prompt() {
-    todo!()
+fn run_prompt() -> Result<()> {
+    print!("> ");
+    stdout().lock().flush().context("flush stdout")?;
+    for line in stdin().lines() {
+        let line = line.context("read line from stdin")?;
+        run(line);
+
+        print!("> ");
+        stdout().lock().flush().context("flush stdout")?;
+    }
+
+    Ok(())
+}
+
+fn run(source: String) {
+    let lexer = Lexer::new(&source);
+    for result in lexer.scan_all_tokens() {
+        match result {
+            Ok(token) => println!("{token}"),
+            Err(e) => eprintln!("{e}"),
+        }
+    }
 }
