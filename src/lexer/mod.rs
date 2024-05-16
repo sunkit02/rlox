@@ -50,7 +50,7 @@ impl Lexer {
             start: 0,
             current: 0,
             line: 1,
-            col: 1,
+            col: 0,
         }
     }
 

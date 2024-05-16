@@ -30,26 +30,28 @@ fn main() -> Result<()> {
 fn run_file(path: PathBuf) -> Result<()> {
     let src_file = fs::read_to_string(path)?;
 
-    run(src_file);
+    run(src_file.as_str());
 
     Ok(())
 }
 
 fn run_prompt() -> Result<()> {
-    print!("> ");
+    let prompt: &str = "> ";
+
+    print!("{}", prompt);
     stdout().lock().flush().context("flush stdout")?;
     for line in stdin().lines() {
         let line = line.context("read line from stdin")?;
-        run(line);
+        run(line.as_str());
 
-        print!("> ");
+        print!("{}", prompt);
         stdout().lock().flush().context("flush stdout")?;
     }
 
     Ok(())
 }
 
-fn run(source: String) {
+fn run(source: &str) {
     let lexer = Lexer::new(&source);
     for result in lexer.scan_all_tokens() {
         match result {
