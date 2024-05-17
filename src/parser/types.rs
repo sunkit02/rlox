@@ -125,7 +125,7 @@ impl Display for Operator {
             OperatorType::Greater => ">",
             OperatorType::GreaterEqual => ">=",
             OperatorType::Less => "<",
-            OperatorType::LessEqual => ">=",
+            OperatorType::LessEqual => "<=",
         };
 
         write!(f, "{string}")
