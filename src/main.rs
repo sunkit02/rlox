@@ -1,4 +1,5 @@
-use anyhow::{Context, Result};
+use anyhow::Context;
+use parser::Parser;
 use std::{
     env, fs,
     io::{stdin, stdout, Write},
@@ -10,8 +11,9 @@ use std::{
 use crate::lexer::Lexer;
 
 mod lexer;
+mod parser;
 
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     // Skip the current exe name
     let args: Vec<String> = env::args().skip(1).collect();
     if args.len() > 1 {
@@ -27,22 +29,25 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run_file(path: PathBuf) -> Result<()> {
+fn run_file(path: PathBuf) -> anyhow::Result<()> {
     let src_file = fs::read_to_string(path)?;
 
-    run(src_file.as_str());
+    run(src_file.as_str())?;
 
     Ok(())
 }
 
-fn run_prompt() -> Result<()> {
+fn run_prompt() -> anyhow::Result<()> {
     let prompt: &str = "> ";
 
     print!("{}", prompt);
     stdout().lock().flush().context("flush stdout")?;
     for line in stdin().lines() {
         let line = line.context("read line from stdin")?;
-        run(line.as_str());
+
+        if let Err(e) = run(line.as_str()) {
+            eprintln!("{e}");
+        }
 
         print!("{}", prompt);
         stdout().lock().flush().context("flush stdout")?;
@@ -51,12 +56,16 @@ fn run_prompt() -> Result<()> {
     Ok(())
 }
 
-fn run(source: &str) {
+fn run(source: &str) -> anyhow::Result<()> {
     let lexer = Lexer::new(&source);
-    for result in lexer.scan_all_tokens() {
-        match result {
-            Ok(token) => println!("{token}"),
-            Err(e) => eprintln!("{e}"),
-        }
-    }
+    let tokens = lexer
+        .scan_all_tokens()
+        .into_iter()
+        .collect::<lexer::Result<Vec<_>>>()?;
+    let mut parser = Parser::new(tokens);
+    let expr = parser.parse()?;
+
+    println!("{expr}");
+
+    Ok(())
 }
