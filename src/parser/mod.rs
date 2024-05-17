@@ -40,7 +40,7 @@ impl Parser {
             let operator_token = self
                 .advance()
                 .cloned()
-                .ok_or(ParserError::AccessedTokenDoesNotExist)?;
+                .ok_or(ParserError::UnexpectedEndOfTokens)?;
 
             let operator = Operator::try_from(operator_token)?;
 
@@ -62,7 +62,7 @@ impl Parser {
             let operator_token = self
                 .advance()
                 .cloned()
-                .ok_or(ParserError::AccessedTokenDoesNotExist)?;
+                .ok_or(ParserError::UnexpectedEndOfTokens)?;
 
             let operator = Operator::try_from(operator_token)?;
 
@@ -84,7 +84,7 @@ impl Parser {
             let operator_token = self
                 .advance()
                 .cloned()
-                .ok_or(ParserError::AccessedTokenDoesNotExist)?;
+                .ok_or(ParserError::UnexpectedEndOfTokens)?;
 
             let operator = Operator::try_from(operator_token)?;
 
@@ -106,7 +106,7 @@ impl Parser {
             let operator_token = self
                 .advance()
                 .cloned()
-                .ok_or(ParserError::AccessedTokenDoesNotExist)?;
+                .ok_or(ParserError::UnexpectedEndOfTokens)?;
 
             let operator = Operator::try_from(operator_token)?;
 
@@ -126,7 +126,7 @@ impl Parser {
             let operator_token = self
                 .advance()
                 .cloned()
-                .ok_or(ParserError::AccessedTokenDoesNotExist)?;
+                .ok_or(ParserError::UnexpectedEndOfTokens)?;
 
             let operator = Operator::try_from(operator_token)?;
             let right = self.primary()?;
@@ -144,7 +144,7 @@ impl Parser {
         let token = self
             .advance()
             .cloned()
-            .ok_or(ParserError::AccessedTokenDoesNotExist)?;
+            .ok_or(ParserError::UnexpectedEndOfTokens)?;
 
         let expr = match token.token_type {
             Nil => Expr::Literal { value: Value::Nil },
@@ -210,14 +210,15 @@ impl Parser {
     }
 
     fn consume(&mut self, token_type: TokenType, error_message: &str) -> Result<()> {
-        let current = self.peek().ok_or(ParserError::AccessedTokenDoesNotExist)?;
-        if current.token_type != token_type {
-            return Err(ParserError::MissingExpectedToken {
+        let current = self.peek().ok_or(ParserError::UnexpectedEndOfTokens)?;
+        if current.token_type == token_type {
+            self.advance().ok_or(ParserError::UnexpectedEndOfTokens)?;
+            Ok(())
+        } else {
+            Err(ParserError::MissingExpectedToken {
                 token_type,
                 message: error_message.to_owned(),
-            });
+            })
         }
-
-        Ok(())
     }
 }
