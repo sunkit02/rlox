@@ -248,14 +248,14 @@ impl Lexer {
         }
 
         let lexeme = self.get_lexeme();
-        let number = lexeme.parse::<f64>().map_err(|e| {
-            LexerError::FloatParsingError {
+        let number = lexeme
+            .parse::<f64>()
+            .map_err(|e| LexerError::FloatParsingError {
                 lexeme,
                 line: self.line,
                 col: self.col,
                 message: e.to_string(),
-            }
-        })?;
+            })?;
 
         Ok(TokenType::Number(number))
     }
