@@ -3,9 +3,10 @@ use std::collections::HashMap;
 use lazy_static::lazy_static;
 
 use self::cursor::Peekable;
-use self::error::{LexerError, Result};
 use self::token::TokenType;
 use self::{cursor::Cursor, token::Token};
+
+pub use self::error::{LexerError, Result};
 
 pub mod cursor;
 pub mod error;
@@ -55,6 +56,8 @@ impl Lexer {
     }
 
     pub fn scan_token(&mut self) -> Option<Result<Token>> {
+        self.start = self.current;
+
         let c = self.advance()?;
         let token_type_result = match c {
             // Single letter tokens
@@ -126,7 +129,8 @@ impl Lexer {
                 // Increment line counter
                 self.line += 1;
                 // Reset col counter
-                self.col = 1;
+                self.col = 0;
+
                 Ok(TokenType::Whitespace)
             }
 
@@ -140,14 +144,17 @@ impl Lexer {
             }
         };
 
-        let token_result = token_type_result.map(|token_type| self.create_token(token_type));
+        let token_type = match token_type_result {
+            Ok(token_type) => token_type,
+            Err(e) => return Some(Err(e)),
+        };
 
-        let result = Some(token_result);
-
-        #[cfg(debug_assertions)]
-        println!("\t->> DEBUG: Lexer::scan_token() -> {:?}", result);
-
-        result
+        // If the token is whitespace, simply pass over to the next token
+        if let TokenType::Whitespace = token_type {
+            self.scan_token()
+        } else {
+            Some(Ok(self.create_token(token_type)))
+        }
     }
 
     #[inline]
@@ -179,8 +186,6 @@ impl Lexer {
             line: self.line,
             col: self.col,
         };
-
-        self.start = self.current;
 
         token
     }
@@ -243,14 +248,14 @@ impl Lexer {
         }
 
         let lexeme = self.get_lexeme();
-        let number = lexeme
-            .parse::<f64>()
-            .map_err(|e| LexerError::FloatParsingError {
+        let number = lexeme.parse::<f64>().map_err(|e| {
+            LexerError::FloatParsingError {
                 lexeme,
                 line: self.line,
                 col: self.col,
                 message: e.to_string(),
-            })?;
+            }
+        })?;
 
         Ok(TokenType::Number(number))
     }
