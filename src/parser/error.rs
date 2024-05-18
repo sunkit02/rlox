@@ -16,6 +16,8 @@ pub enum ParserError {
     InvalidPrimaryExpressionToken(Token),
 
     #[error("expected {}: {}",.token_type.to_str(), .message)]
+
+    #[error("expected {}: {}",.token_type.name(), .message)]
     MissingExpectedToken {
         token_type: TokenType,
         message: String,

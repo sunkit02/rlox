@@ -182,7 +182,6 @@ impl Lexer {
     fn create_token(&mut self, token_type: TokenType) -> Token {
         let token = Token {
             token_type,
-            lexeme: self.get_lexeme(),
             line: self.line,
             col: self.col,
         };
@@ -276,7 +275,7 @@ impl Lexer {
         if let Some(keyword_type) = KEYWORDS.get(literal.as_str()) {
             Ok(keyword_type.clone())
         } else {
-            Ok(TokenType::Identifier)
+            Ok(TokenType::Identifier(literal))
         }
     }
 }

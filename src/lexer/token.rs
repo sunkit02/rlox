@@ -3,7 +3,6 @@ use std::fmt::Display;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: String,
     pub line: usize,
     pub col: usize,
 }
@@ -15,13 +14,7 @@ impl Display for Token {
             TokenType::Number(num_literal) => num_literal.to_string(),
             _ => "".to_string(),
         };
-        write!(
-            f,
-            "{} {} {}",
-            self.token_type.to_str(),
-            self.lexeme,
-            literal
-        )
+        write!(f, "{} {}", self.token_type.name(), literal)
     }
 }
 
@@ -51,7 +44,7 @@ pub enum TokenType {
     LessEqual,
 
     // Literals.
-    Identifier,
+    Identifier(String),
     String(String),
     Number(f64),
 
@@ -81,7 +74,7 @@ pub enum TokenType {
 
 impl TokenType {
     /// Returns the name of the variant as a string slice
-    pub fn to_str(&self) -> &str {
+    pub fn name(&self) -> &str {
         match self {
             TokenType::LeftParen => "LeftParen",
             TokenType::RightParen => "RightParen",
@@ -102,7 +95,7 @@ impl TokenType {
             TokenType::GreaterEqual => "GreaterEqual",
             TokenType::Less => "Less",
             TokenType::LessEqual => "LessEqual",
-            TokenType::Identifier => "Identifier",
+            TokenType::Identifier(_) => "Identifier",
             TokenType::String(_) => "String",
             TokenType::Number(_) => "Number",
             TokenType::And => "And",

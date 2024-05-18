@@ -9,31 +9,26 @@ fn can_scan_positive_numbers() {
     let expected = [
         Ok(Token {
             token_type: TokenType::Number(0.0),
-            lexeme: "0".to_owned(),
             line: 1,
             col: 1,
         }),
         Ok(Token {
             token_type: TokenType::Number(0.5),
-            lexeme: "0.5".to_owned(),
             line: 1,
             col: 5,
         }),
         Ok(Token {
             token_type: TokenType::Number(1.0),
-            lexeme: "1".to_owned(),
             line: 1,
             col: 7,
         }),
         Ok(Token {
             token_type: TokenType::Number(2.5),
-            lexeme: "2.5".to_owned(),
             line: 1,
             col: 11,
         }),
         Ok(Token {
             token_type: TokenType::Number(3.14159),
-            lexeme: "3.14159".to_owned(),
             line: 1,
             col: 19,
         }),
@@ -52,49 +47,41 @@ fn can_scan_negative_numbers() {
     let expected = [
         Ok(Token {
             token_type: TokenType::Minus,
-            lexeme: "-".to_owned(),
             line: 1,
             col: 1,
         }),
         Ok(Token {
             token_type: TokenType::Number(0.5),
-            lexeme: "0.5".to_owned(),
             line: 1,
             col: 4,
         }),
         Ok(Token {
             token_type: TokenType::Minus,
-            lexeme: "-".to_owned(),
             line: 1,
             col: 6,
         }),
         Ok(Token {
             token_type: TokenType::Number(1.0),
-            lexeme: "1".to_owned(),
             line: 1,
             col: 7,
         }),
         Ok(Token {
             token_type: TokenType::Minus,
-            lexeme: "-".to_owned(),
             line: 1,
             col: 9,
         }),
         Ok(Token {
             token_type: TokenType::Number(2.5),
-            lexeme: "2.5".to_owned(),
             line: 1,
             col: 12,
         }),
         Ok(Token {
             token_type: TokenType::Minus,
-            lexeme: "-".to_owned(),
             line: 1,
             col: 14,
         }),
         Ok(Token {
             token_type: TokenType::Number(3.14159),
-            lexeme: "3.14159".to_owned(),
             line: 1,
             col: 21,
         }),
@@ -113,7 +100,6 @@ fn can_scan_int() {
     let tokens = lexer.scan_all_tokens();
     let expected = [Ok(Token {
         token_type: TokenType::Number(3.0f64),
-        lexeme: source.to_string(),
         line: 1,
         col: source.len(),
     })];
@@ -129,7 +115,6 @@ fn can_scan_string_literal() {
     let tokens = lexer.scan_all_tokens();
     let expected = [Ok(Token {
         token_type: TokenType::String("Hello, world!".to_string()),
-        lexeme: source.to_owned(),
         line: 1,
         col: source.len(),
     })];
@@ -146,13 +131,11 @@ fn can_scan_booleans() {
     let expected = [
         Ok(Token {
             token_type: TokenType::True,
-            lexeme: "true".to_owned(),
             line: 1,
             col: 4,
         }),
         Ok(Token {
             token_type: TokenType::False,
-            lexeme: "false".to_owned(),
             line: 1,
             col: 10,
         }),
@@ -169,7 +152,6 @@ fn can_scan_nil() {
     let tokens = lexer.scan_all_tokens();
     let expected = [Ok(Token {
         token_type: TokenType::Nil,
-        lexeme: "nil".to_owned(),
         line: 1,
         col: 3,
     })];
@@ -185,14 +167,12 @@ fn can_scan_rust_use_statement() {
     let tokens = lexer.scan_all_tokens();
     let expected = [
         Ok(Token {
-            token_type: TokenType::Identifier,
-            lexeme: "use".to_string(),
+            token_type: TokenType::Identifier("use".to_owned()),
             line: 1,
             col: 3,
         }),
         Ok(Token {
-            token_type: TokenType::Identifier,
-            lexeme: "anyhow".to_string(),
+            token_type: TokenType::Identifier("anyhow".to_owned()),
             line: 1,
             col: 10,
         }),
@@ -208,37 +188,31 @@ fn can_scan_rust_use_statement() {
         }),
         Ok(Token {
             token_type: TokenType::LeftBrace,
-            lexeme: "{".to_string(),
             line: 1,
             col: 13,
         }),
         Ok(Token {
-            token_type: TokenType::Identifier,
-            lexeme: "Context".to_string(),
+            token_type: TokenType::Identifier("Context".to_owned()),
             line: 1,
             col: 20,
         }),
         Ok(Token {
             token_type: TokenType::Comma,
-            lexeme: ",".to_string(),
             line: 1,
             col: 21,
         }),
         Ok(Token {
-            token_type: TokenType::Identifier,
-            lexeme: "Result".to_string(),
+            token_type: TokenType::Identifier("Result".to_owned()),
             line: 1,
             col: 28,
         }),
         Ok(Token {
             token_type: TokenType::RightBrace,
-            lexeme: "}".to_string(),
             line: 1,
             col: 29,
         }),
         Ok(Token {
             token_type: TokenType::Semicolon,
-            lexeme: ";".to_string(),
             line: 1,
             col: 30,
         }),
@@ -338,67 +312,56 @@ fn can_scan_binary_groups() {
     let expected = [
         Ok(Token {
             token_type: TokenType::LeftParen,
-            lexeme: "(".to_owned(),
             line: 1,
             col: 1,
         }),
         Ok(Token {
             token_type: TokenType::Number(1.0),
-            lexeme: "1".to_owned(),
             line: 1,
             col: 2,
         }),
         Ok(Token {
             token_type: TokenType::Plus,
-            lexeme: "+".to_owned(),
             line: 1,
             col: 4,
         }),
         Ok(Token {
             token_type: TokenType::Number(2.0),
-            lexeme: "2".to_owned(),
             line: 1,
             col: 6,
         }),
         Ok(Token {
             token_type: TokenType::RightParen,
-            lexeme: ")".to_owned(),
             line: 1,
             col: 7,
         }),
         Ok(Token {
             token_type: TokenType::Star,
-            lexeme: "*".to_owned(),
             line: 1,
             col: 9,
         }),
         Ok(Token {
             token_type: TokenType::LeftParen,
-            lexeme: "(".to_owned(),
             line: 1,
             col: 11,
         }),
         Ok(Token {
             token_type: TokenType::Number(3.0),
-            lexeme: "3".to_owned(),
             line: 1,
             col: 12,
         }),
         Ok(Token {
             token_type: TokenType::Minus,
-            lexeme: "-".to_owned(),
             line: 1,
             col: 14,
         }),
         Ok(Token {
             token_type: TokenType::Number(4.0),
-            lexeme: "4".to_owned(),
             line: 1,
             col: 16,
         }),
         Ok(Token {
             token_type: TokenType::RightParen,
-            lexeme: ")".to_owned(),
             line: 1,
             col: 17,
         }),

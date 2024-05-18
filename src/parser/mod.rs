@@ -167,6 +167,7 @@ impl Parser {
                     inner: Box::new(inner_expr),
                 }
             }
+            Identifier(_) => Expr::Variable { name: token },
 
             _ => return Err(ParserError::InvalidPrimaryExpressionToken(token)),
         };
