@@ -47,12 +47,6 @@ impl Cursor {
             Some(slice)
         };
 
-        #[cfg(debug_assertions)]
-        println!(
-            "\t->> DEBUG: Cursor::substring(start: {}, end: {}) -> {:?}",
-            start, end, substring_option
-        );
-
         substring_option
     }
 

@@ -262,9 +262,6 @@ impl Lexer {
 
     #[inline]
     fn handle_indentifier(&mut self) -> Result<TokenType> {
-        #[cfg(debug_assertions)]
-        println!("\t->> DEBUG: Enter Lexer::handle_indentifier()");
-
         while let Some(next_char) = self.source.peek() {
             // Allow '_' as a seperator in identifiers
             if next_char.is_alphanumeric() || next_char == '_' {
@@ -274,33 +271,13 @@ impl Lexer {
             }
         }
 
-        #[cfg(debug_assertions)]
-        println!("\t->> DEBUG: Lexer::handle_indentifier(): Finished scanning identifier");
+        let literal = self.get_lexeme();
 
-        let literal = self
-            .source
-            .substring(self.start, self.current)
-            .expect(&format!(
-                "substring with start {} and end {} should be valid",
-                self.start, self.current
-            ));
-
-        #[cfg(debug_assertions)]
-        println!(
-            "\t->> DEBUG: Lexer::handle_indentifier(): Scanned literal {}",
-            literal
-        );
-
-        let result = if let Some(keyword_type) = KEYWORDS.get(literal.as_str()) {
+        if let Some(keyword_type) = KEYWORDS.get(literal.as_str()) {
             Ok(keyword_type.clone())
         } else {
             Ok(TokenType::Identifier)
-        };
-
-        #[cfg(debug_assertions)]
-        println!("\t->> DEBUG: Lexer::handle_indentifier() -> {:?}", result);
-
-        result
+        }
     }
 }
 
