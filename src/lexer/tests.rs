@@ -371,3 +371,40 @@ fn can_scan_binary_groups() {
         assert_eq!(token, expected_token, "index: {idx}");
     }
 }
+
+#[test]
+fn can_scan_variable_declaration() {
+    let source = "var a = 1;";
+    let lexer = Lexer::new(source);
+
+    let tokens = lexer.scan_all_tokens();
+    let expected = [
+        Ok(Token {
+            token_type: TokenType::Var,
+            line: 1,
+            col: 3,
+        }),
+        Ok(Token {
+            token_type: TokenType::Identifier("a".to_owned()),
+            line: 1,
+            col: 5,
+        }),
+        Ok(Token {
+            token_type: TokenType::Equal,
+            line: 1,
+            col: 7,
+        }),
+        Ok(Token {
+            token_type: TokenType::Number(1.0),
+            line: 1,
+            col: 9,
+        }),
+        Ok(Token {
+            token_type: TokenType::Semicolon,
+            line: 1,
+            col: 10,
+        }),
+    ];
+
+    assert_eq!(tokens, expected);
+}

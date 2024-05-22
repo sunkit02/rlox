@@ -63,9 +63,11 @@ fn run(source: &str) -> anyhow::Result<()> {
         .into_iter()
         .collect::<lexer::Result<Vec<_>>>()?;
     let mut parser = Parser::new(tokens);
-    let expr = parser.parse()?;
+    let statements = parser.parse()?;
 
-    println!("{expr}");
+    for stmt in statements {
+        println!("{stmt}");
+    }
 
     Ok(())
 }

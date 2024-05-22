@@ -15,7 +15,8 @@ pub enum ParserError {
     #[error("expected expression, got: {0}")]
     InvalidPrimaryExpressionToken(Token),
 
-    #[error("expected {}: {}",.token_type.to_str(), .message)]
+    #[error("invalid assignment target at: {0}")]
+    InvalidAssignmentTarget(Token),
 
     #[error("expected {}: {}",.token_type.name(), .message)]
     MissingExpectedToken {

@@ -18,7 +18,7 @@ impl Display for Token {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum TokenType {
     // Single-character tokens.
     LeftParen,
@@ -118,5 +118,11 @@ impl TokenType {
             TokenType::Whitespace => "Whitespace",
             TokenType::Eof => "Eof",
         }
+    }
+}
+
+impl PartialEq for TokenType {
+    fn eq(&self, other: &Self) -> bool {
+        self.name() == other.name()
     }
 }

@@ -3,12 +3,13 @@ use crate::lexer::token::{
     TokenType::{self, *},
 };
 
-use self::types::{Expr, Value};
+use self::types::{Expr, Stmt, Value};
 use self::{
     error::{ParserError, Result},
     types::Operator,
 };
 
+pub mod environment;
 pub mod error;
 pub mod types;
 
@@ -25,12 +26,114 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Expr> {
-        self.expression()
+    pub fn parse(&mut self) -> Result<Vec<Stmt>> {
+        let mut statements = Vec::new();
+        while !self.is_at_end() {
+            statements.push(self.declaration()?);
+        }
+
+        Ok(statements)
+    }
+
+    fn declaration(&mut self) -> Result<Stmt> {
+        if self.matches_any([Var]) {
+            self.advance().ok_or(ParserError::UnexpectedEndOfTokens)?;
+
+            debug_assert!(
+                self.peek()
+                    .map(|token| if let TokenType::Identifier(_) = token.token_type {
+                        true
+                    } else {
+                        false
+                    })
+                    == Some(true)
+            );
+
+            self.var_declaration().inspect_err(|_| self.synchronize())
+        } else {
+            self.statement()
+        }
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt> {
+        // TODO: Fix this ugly little hack to get Identifiers to work.
+        // The PartialEq impl for TokenType should not be broken and ignore the
+        // value held by the variant.
+        let name = self.consume(Identifier("".to_owned()), "expected variable name")?;
+
+        let initializer = if self.matches_any([Equal]) {
+            self.advance().ok_or(ParserError::UnexpectedEndOfTokens)?;
+            Some(self.expression()?)
+        } else {
+            None
+        };
+
+        self.consume(Semicolon, "expected ';' after variable declaration")?;
+
+        Ok(Stmt::Var { name, initializer })
+    }
+
+    fn statement(&mut self) -> Result<Stmt> {
+        let current_token = self.peek().ok_or(ParserError::UnexpectedEndOfTokens)?;
+        match current_token.token_type {
+            Print => self.print_statement(),
+            LeftBrace => self.block(),
+            _ => self.expression_statement(),
+        }
+    }
+
+    fn block(&mut self) -> Result<Stmt> {
+        self.consume(LeftBrace, "expected '{' at start of block")?;
+        let mut statements = Vec::new();
+
+        while !self.matches_any([RightBrace]) {
+            statements.push(self.declaration()?);
+        }
+
+        Ok(Stmt::Block(statements))
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt> {
+        self.consume(Print, "expected a `print` keyword")?;
+        let expr = self.expression()?;
+        self.consume(Semicolon, "expected ';' after value")?;
+
+        Ok(Stmt::Print(expr))
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt> {
+        let expr = self.expression()?;
+        self.consume(Semicolon, "expected ';' after expression")?;
+
+        Ok(Stmt::Expression(expr))
     }
 
     fn expression(&mut self) -> Result<Expr> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr> {
+        let expr = self.equality()?;
+
+        if self.matches_any([Equal]) {
+            let equals_token = self
+                .advance()
+                .cloned()
+                .ok_or(ParserError::UnexpectedEndOfTokens)?;
+
+            let value = self.assignment()?;
+
+            if let Expr::Variable { name } = expr {
+                return Ok(Expr::Assign {
+                    name,
+                    value: Box::new(value),
+                });
+            }
+
+            return Err(ParserError::InvalidAssignmentTarget(equals_token));
+        }
+
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Expr> {
@@ -162,7 +265,7 @@ impl Parser {
             },
             LeftParen => {
                 let inner_expr = self.expression()?;
-                self.consume(RightParen, "Expect ')' after expression.")?;
+                self.consume(RightParen, "expected ')' after expression.")?;
                 Expr::Grouping {
                     inner: Box::new(inner_expr),
                 }
@@ -210,16 +313,35 @@ impl Parser {
         self.tokens.get(self.current)
     }
 
-    fn consume(&mut self, token_type: TokenType, error_message: &str) -> Result<()> {
+    fn consume(&mut self, token_type: TokenType, error_message: &str) -> Result<Token> {
         let current = self.peek().ok_or(ParserError::UnexpectedEndOfTokens)?;
         if current.token_type == token_type {
-            self.advance().ok_or(ParserError::UnexpectedEndOfTokens)?;
-            Ok(())
+            let token = self.advance().ok_or(ParserError::UnexpectedEndOfTokens)?;
+            Ok(token.clone())
         } else {
             Err(ParserError::MissingExpectedToken {
                 token_type,
                 message: error_message.to_owned(),
             })
+        }
+    }
+
+    /// Escape all tokens until the next class, function, variable declaration, or for, if , while,
+    /// print, return statement, or semilcolon
+    fn synchronize(&mut self) {
+        self.advance();
+
+        while !self.is_at_end() {
+            let previous = self.previous().expect("previous token should exist");
+            if previous.token_type == TokenType::Semicolon {
+                return;
+            }
+
+            let current = self.peek().expect("current token should exist");
+            match current.token_type {
+                Class | Fun | Var | For | If | While | Print | Return => return,
+                _ => {}
+            }
         }
     }
 }

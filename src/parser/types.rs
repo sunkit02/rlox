@@ -5,11 +5,23 @@ use crate::lexer::token::{Token, TokenType};
 use super::error::ParserError;
 
 #[derive(Debug, PartialEq)]
+pub enum Stmt {
+    Block(Vec<Stmt>),
+    Expression(Expr),
+    Print(Expr),
+    Var {
+        name: Token,
+        initializer: Option<Expr>,
+    },
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expr {
     // TODO: Do these later.
-    //
-    // Assign,
-    // Variable,
+    Assign {
+        name: Token,
+        value: Box<Expr>,
+    },
     Binary {
         left: Box<Expr>,
         operator: Operator,
@@ -24,6 +36,9 @@ pub enum Expr {
     Unary {
         operator: Operator,
         right: Box<Expr>,
+    },
+    Variable {
+        name: Token,
     },
 }
 
@@ -104,6 +119,8 @@ impl Display for Expr {
             Expr::Grouping { inner } => format!("(group {inner})"),
             Expr::Literal { value } => format!("{value}"),
             Expr::Unary { operator, right } => format!("({operator} {right})"),
+            Expr::Assign { name, value } => format!("(assign {name} <- {value})"),
+            Expr::Variable { name } => format!("(var {name})"),
         };
 
         write!(f, "{formatted_string}")
@@ -146,6 +163,33 @@ impl Display for Value {
                 }
             }
             Value::String(string) => format!("\"{string}\""),
+        };
+
+        write!(f, "{string}")
+    }
+}
+
+impl Display for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = match self {
+            Stmt::Block(expressions) => {
+                let string = expressions.iter().fold(String::new(), |mut acc, stmt| {
+                    acc.push_str(&format!("{stmt} "));
+                    acc
+                });
+
+                format!("{{ {string} }}")
+            }
+            Stmt::Expression(expr) => format!("{expr};"),
+            Stmt::Print(expr) => format!("(print {expr});"),
+            Stmt::Var { name, initializer } => format!(
+                "(var {name} = {});",
+                if let Some(initializer) = initializer {
+                    initializer.to_string()
+                } else {
+                    "nil".to_owned()
+                }
+            ),
         };
 
         write!(f, "{string}")
