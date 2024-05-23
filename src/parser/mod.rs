@@ -9,7 +9,6 @@ use self::{
     types::Operator,
 };
 
-pub mod environment;
 pub mod error;
 pub mod types;
 
