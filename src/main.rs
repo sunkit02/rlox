@@ -1,5 +1,4 @@
 use anyhow::Context;
-use parser::Parser;
 use std::{
     env, fs,
     io::{stdin, stdout, Write},
@@ -8,10 +7,8 @@ use std::{
     str::FromStr,
 };
 
-use crate::lexer::Lexer;
-
-mod lexer;
-mod parser;
+use rlox::lexer::{self, Lexer};
+use rlox::parser::Parser;
 
 fn main() -> anyhow::Result<()> {
     // Skip the current exe name
