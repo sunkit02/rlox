@@ -53,11 +53,11 @@ pub enum Value {
 
 #[derive(Debug, PartialEq)]
 pub struct Operator {
-    operator_type: OperatorType,
+    pub operator_type: OperatorType,
     /// Line number in source file
-    src_line: usize,
+    pub src_line: usize,
     /// Column number in source file
-    src_col: usize,
+    pub src_col: usize,
 }
 
 #[derive(Debug, PartialEq)]
