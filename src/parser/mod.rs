@@ -86,9 +86,11 @@ impl Parser {
         self.consume(LeftBrace, "expected '{' at start of block")?;
         let mut statements = Vec::new();
 
-        while !self.matches_any([RightBrace]) {
+        while !self.matches_any([RightBrace]) && !self.is_at_end() {
             statements.push(self.declaration()?);
         }
+
+        self.consume(RightBrace, "expected '}' at end of block")?;
 
         Ok(Stmt::Block(statements))
     }
@@ -314,15 +316,21 @@ impl Parser {
     }
 
     fn consume(&mut self, token_type: TokenType, error_message: &str) -> Result<Token> {
-        let current = self.peek().ok_or(ParserError::UnexpectedEndOfTokens)?;
-        if current.token_type == token_type {
-            let token = self.advance().ok_or(ParserError::UnexpectedEndOfTokens)?;
-            Ok(token.clone())
+        let missing_token_error = ParserError::MissingExpectedToken {
+            token_type: token_type.clone(),
+            message: error_message.to_owned(),
+        };
+
+        let current_token = match self.peek() {
+            Some(token) => token,
+            None => return Err(missing_token_error),
+        };
+
+        if current_token.token_type == token_type {
+            let current_token = self.advance().ok_or(ParserError::UnexpectedEndOfTokens)?;
+            Ok(current_token.clone())
         } else {
-            Err(ParserError::MissingExpectedToken {
-                token_type,
-                message: error_message.to_owned(),
-            })
+            Err(missing_token_error)
         }
     }
 
