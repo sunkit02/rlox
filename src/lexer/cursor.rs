@@ -43,7 +43,7 @@ impl Cursor {
             return None;
         } else {
             let slice = &self.stack[start..end];
-            let slice = slice.into_iter().collect();
+            let slice = slice.iter().collect();
 
             Some(slice)
         };
@@ -85,10 +85,7 @@ impl Peekable for Cursor {
     }
 
     fn peek_prev_nth(&self, n: usize) -> Option<Self::Item> {
-        match self.needle.checked_sub(n) {
-            Some(target) => Some(self.stack[target]),
-            None => None,
-        }
+        self.needle.checked_sub(n).map(|target| self.stack[target])
     }
 }
 

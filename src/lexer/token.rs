@@ -20,11 +20,7 @@ impl Display for Token {
 
 impl Token {
     pub fn is_identifier(&self) -> bool {
-        if let TokenType::Identifier(_) = self.token_type {
-            true
-        } else {
-            false
-        }
+        matches!(self.token_type, TokenType::Identifier(_))
     }
 }
 

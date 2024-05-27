@@ -53,21 +53,11 @@ pub enum Value {
 
 impl Value {
     pub fn is_number(&self) -> bool {
-        if let Value::Number(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Value::Number(_))
     }
 
     pub fn all_is_number<'a, I: IntoIterator<Item = &'a Value>>(values: I) -> bool {
-        for value in values {
-            if !value.is_number() {
-                return false;
-            }
-        }
-
-        true
+        values.into_iter().all(Value::is_number)
     }
 }
 

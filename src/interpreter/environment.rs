@@ -4,6 +4,7 @@ use thiserror::Error;
 
 use crate::parser::types::Value;
 
+#[derive(Default)]
 pub struct Environment {
     enclosing: Option<Box<Environment>>,
     values: HashMap<String, Value>,
@@ -55,14 +56,6 @@ impl Environment {
     }
 }
 
-impl Default for Environment {
-    fn default() -> Self {
-        Self {
-            enclosing: None,
-            values: HashMap::default(),
-        }
-    }
-}
 
 #[derive(Debug, Error)]
 pub enum EnvironmentError {

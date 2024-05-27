@@ -304,7 +304,7 @@ fn can_parse_literal_expression() {
         .map(|(i, tokens)| {
             Parser::new(tokens)
                 .expression()
-                .expect(&format!("failed to parse token at index {i}"))
+                .unwrap_or_else(|_| panic!("failed to parse token at index {i}"))
         })
         .collect::<Vec<Expr>>();
 
@@ -330,7 +330,7 @@ fn can_parse_unary_expression() {
         .map(|(i, tokens)| {
             Parser::new(tokens)
                 .expression()
-                .expect(&format!("failed to parse token at index {i}"))
+                .unwrap_or_else(|_| panic!("failed to parse token at index {i}"))
         })
         .collect::<Vec<Expr>>();
 

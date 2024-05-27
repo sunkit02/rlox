@@ -180,13 +180,13 @@ impl Lexer {
 
     #[inline]
     fn create_token(&mut self, token_type: TokenType) -> Token {
-        let token = Token {
+        
+
+        Token {
             token_type,
             line: self.line,
             col: self.col,
-        };
-
-        token
+        }
     }
 
     #[inline]
@@ -215,7 +215,7 @@ impl Lexer {
             self.advance();
             let lexeme = self.get_lexeme().chars().collect::<Vec<char>>();
             // trim surrounding quotes
-            let literal = lexeme[1..lexeme.len() - 1].into_iter().collect::<String>();
+            let literal = lexeme[1..lexeme.len() - 1].iter().collect::<String>();
             Ok(TokenType::String(literal))
         }
     }

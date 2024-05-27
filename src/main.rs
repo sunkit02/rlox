@@ -27,15 +27,17 @@ fn main() -> anyhow::Result<()> {
 
     let err_reporter: Box<dyn ErrorReporter> = Box::new(StderrErrorReporter);
 
-    if args.len() > 1 {
-        println!("Usage: rlox [script]");
-        process::exit(64);
-    } else if args.len() == 1 {
-        let path = PathBuf::from_str(&args[0]).context("convert String to PathBuf")?;
-        run_file(path)?;
-    } else {
-        run_prompt([err_reporter])?;
-    };
+    match args.len() {
+        0 => run_prompt([err_reporter])?,
+        1 => {
+            let path = PathBuf::from_str(&args[0]).context("convert String to PathBuf")?;
+            run_file(path)?;
+        }
+        2.. => {
+            println!("Usage: rlox [script]");
+            process::exit(64);
+        }
+    }
 
     Ok(())
 }
@@ -75,7 +77,7 @@ fn run_prompt<I: IntoIterator<Item = Box<dyn ErrorReporter>>>(
 }
 
 fn run(source: &str, interpreter: &mut Interpreter) -> anyhow::Result<()> {
-    let lexer = Lexer::new(&source);
+    let lexer = Lexer::new(source);
     let tokens = lexer
         .scan_all_tokens()
         .into_iter()
