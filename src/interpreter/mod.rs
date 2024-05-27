@@ -174,8 +174,8 @@ impl Interpreter {
 
                 // Allow implicit string conversions
                 (lhs, rhs) => {
-                    let mut lhs = lhs.to_string();
-                    lhs.push_str(rhs.to_string().as_str());
+                    let mut lhs = lhs.stringify();
+                    lhs.push_str(rhs.stringify().as_str());
                     Value::String(lhs)
                 }
             },

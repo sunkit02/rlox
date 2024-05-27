@@ -72,6 +72,8 @@ impl Value {
 }
 
 impl Value {
+    /// Convert `Value` to its intended printing format when printed as a value in the Lox
+    /// programming language
     pub fn stringify(&self) -> String {
         match self {
             Value::String(string) => string.clone(),
