@@ -60,6 +60,9 @@ impl RuntimeError {
                 line: name_token.line,
                 col: name_token.col,
             },
+            EnvironmentError::ExitingGlobalScope => {
+                panic!("The interpreter should never try to exit the global scope.")
+            }
         }
     }
 }

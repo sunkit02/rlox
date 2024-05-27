@@ -55,9 +55,15 @@ impl Interpreter {
     pub fn execute(&mut self, stmt: Stmt) -> Result<()> {
         match stmt {
             Stmt::Block(stmts) => {
+                self.environment.enter_new_scope();
+
                 for stmt in stmts {
                     self.execute(stmt)?;
                 }
+
+                self.environment
+                    .exit_current_scope()
+                    .expect("should never fail to exit a newly entered scope");
             }
             Stmt::Expression(expr) => {
                 self.evaluate(expr)?;
