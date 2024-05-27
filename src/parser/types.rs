@@ -43,12 +43,41 @@ pub enum Expr {
 }
 
 /// Types of valid values in the Lox language
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Boolean(bool),
     Nil,
     Number(f64),
     String(String),
+}
+
+impl Value {
+    pub fn is_number(&self) -> bool {
+        if let Value::Number(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn all_is_number<'a, I: IntoIterator<Item = &'a Value>>(values: I) -> bool {
+        for value in values {
+            if !value.is_number() {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+impl Value {
+    pub fn stringify(&self) -> String {
+        match self {
+            Value::String(string) => string.clone(),
+            _ => self.to_string(),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]

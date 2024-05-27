@@ -38,15 +38,7 @@ impl Parser {
         if self.matches_any([Var]) {
             self.advance().ok_or(ParserError::UnexpectedEndOfTokens)?;
 
-            debug_assert!(
-                self.peek()
-                    .map(|token| if let TokenType::Identifier(_) = token.token_type {
-                        true
-                    } else {
-                        false
-                    })
-                    == Some(true)
-            );
+            debug_assert!(self.peek().map(|token| token.is_identifier()) == Some(true));
 
             self.var_declaration().inspect_err(|_| self.synchronize())
         } else {
