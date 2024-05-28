@@ -54,21 +54,26 @@ impl Environment {
     /// This method returns an error when the variable `name` has not been defined in the current scope
     /// or any of its enclosing scopes.
     pub fn assign(&mut self, name: String, value: Value) -> Result<(), EnvironmentError> {
-        if self.values.contains_key(&name) {
-            self.values.insert(name, value);
+        fn assign_recur<'a>(
+            env: &'a mut dyn AsMut<Environment>,
+            name: String,
+            value: Value,
+        ) -> Result<(), EnvironmentError> {
+            let env = env.as_mut();
 
+            if !env.values.contains_key(&name) {
+                if let Some(ref mut enclosing) = env.enclosing {
+                    return assign_recur(enclosing, name, value);
+                } else {
+                    return Err(EnvironmentError::UndefinedVariable(name));
+                }
+            }
+
+            env.values.insert(name, value);
             Ok(())
-        } else if self.enclosing.is_some() {
-            let current_scope = self.exit_current_scope()?;
-            let assignment_result = self.assign(name, value);
-
-            // Re-enter current scope reguardless of assignment result
-            self.enter_scope(current_scope);
-
-            assignment_result
-        } else {
-            Err(EnvironmentError::UndefinedVariable(name))
         }
+
+        assign_recur(self, name, value)
     }
 
     /// Returns a reference to the value of the variable `name`.
@@ -157,6 +162,12 @@ pub enum EnvironmentError {
 
 impl AsRef<Environment> for Environment {
     fn as_ref(&self) -> &Environment {
+        self
+    }
+}
+
+impl AsMut<Environment> for Environment {
+    fn as_mut(&mut self) -> &mut Environment {
         self
     }
 }
