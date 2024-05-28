@@ -149,11 +149,10 @@ impl Lexer {
             Err(e) => return Some(Err(e)),
         };
 
-        // If the token is whitespace, simply pass over to the next token
-        if let TokenType::Whitespace = token_type {
-            self.scan_token()
-        } else {
-            Some(Ok(self.create_token(token_type)))
+        // If the token is whitespace or a comment, simply pass over to the next token
+        match token_type {
+            TokenType::Whitespace | TokenType::Comment => self.scan_token(),
+            _ => Some(Ok(self.create_token(token_type))),
         }
     }
 
@@ -180,8 +179,6 @@ impl Lexer {
 
     #[inline]
     fn create_token(&mut self, token_type: TokenType) -> Token {
-        
-
         Token {
             token_type,
             line: self.line,
