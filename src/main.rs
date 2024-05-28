@@ -85,8 +85,6 @@ fn run(source: &str, interpreter: &mut Interpreter) -> anyhow::Result<()> {
     let mut parser = Parser::new(tokens);
     let statements = parser.parse()?;
 
-    statements.iter().for_each(|stmt| println!("{stmt}"));
-
     interpreter.interpret(statements);
 
     Ok(())
