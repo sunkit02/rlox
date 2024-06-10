@@ -175,7 +175,18 @@ impl Interpreter {
                     })
                 }
             }
-            OperatorType::Bang => todo!(),
+            OperatorType::Bang => {
+                let rhs = self.evaluate(rhs)?;
+
+                if let Value::Boolean(boolean) = rhs {
+                    Ok(Value::Boolean(!boolean))
+                } else {
+                    Err(RuntimeError::InvalidUnaryOperatorForValue {
+                        operator: operator.clone(),
+                        value: rhs,
+                    })
+                }
+            }
 
             // Illegal unary operators (for now)
             _ => Err(RuntimeError::InvalidUnaryOperator(operator.clone())),
