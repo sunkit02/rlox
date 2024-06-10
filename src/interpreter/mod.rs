@@ -68,6 +68,17 @@ impl Interpreter {
             Stmt::Expression(expr) => {
                 self.evaluate(expr)?;
             }
+            Stmt::If {
+                condition,
+                then_branch: then_body,
+                else_branch: else_body,
+            } => {
+                if self.evaluate(condition)?.is_truthy() {
+                    self.execute(*then_body)?;
+                } else if let Some(else_body) = else_body {
+                    self.execute(*else_body)?;
+                }
+            }
             Stmt::Print(expr) => println!("{}", self.evaluate(expr)?.stringify()),
             Stmt::Var {
                 name: name_token,

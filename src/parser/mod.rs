@@ -69,6 +69,7 @@ impl Parser {
         match current_token.token_type {
             Print => self.print_statement(),
             LeftBrace => self.block(),
+            If => self.if_statement(),
             _ => self.expression_statement(),
         }
     }
@@ -92,6 +93,28 @@ impl Parser {
         self.consume(Semicolon, "expected ';' after value")?;
 
         Ok(Stmt::Print(expr))
+    }
+
+    fn if_statement(&mut self) -> Result<Stmt> {
+        self.advance().expect("expected If token");
+
+        self.consume(LeftParen, "expected '(' after if.")?;
+        let condition = self.expression()?;
+        self.consume(RightParen, "expected ')' after if condition.")?;
+
+        let then_branch = Box::new(self.statement()?);
+        let else_branch = if self.matches_any([Else]) {
+            self.advance().expect("expected Else token");
+            Some(Box::new(self.statement()?))
+        } else {
+            None
+        };
+
+        Ok(Stmt::If {
+            condition,
+            then_branch,
+            else_branch,
+        })
     }
 
     fn expression_statement(&mut self) -> Result<Stmt> {
@@ -287,9 +310,7 @@ impl Parser {
     }
 
     fn advance(&mut self) -> Option<&Token> {
-        if !self.is_at_end() {
-            self.current += 1;
-        }
+        self.current += 1;
 
         return self.previous();
     }

@@ -8,6 +8,11 @@ use super::error::ParserError;
 pub enum Stmt {
     Block(Vec<Stmt>),
     Expression(Expr),
+    If {
+        condition: Expr,
+        then_branch: Box<Stmt>,
+        else_branch: Option<Box<Stmt>>,
+    },
     Print(Expr),
     Var {
         name: Token,
@@ -58,6 +63,15 @@ impl Value {
 
     pub fn all_is_number<'a, I: IntoIterator<Item = &'a Value>>(values: I) -> bool {
         values.into_iter().all(Value::is_number)
+    }
+
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            Value::Boolean(boolean) => *boolean,
+            Value::Nil => false,
+            Value::Number(num) => *num != 0.0,
+            Value::String(_) => true,
+        }
     }
 }
 
@@ -202,6 +216,18 @@ impl Display for Stmt {
                 format!("{{ {string} }}")
             }
             Stmt::Expression(expr) => format!("{expr};"),
+            Stmt::If {
+                condition,
+                then_branch: then_body,
+                else_branch: else_body,
+            } => {
+                let else_body = if let Some(body) = else_body {
+                    format!(" else {}", body.to_string())
+                } else {
+                    "".to_owned()
+                };
+                format!("(If {condition} then {then_body}{else_body})")
+            }
             Stmt::Print(expr) => format!("(print {expr});"),
             Stmt::Var { name, initializer } => format!(
                 "(var {name} = {});",

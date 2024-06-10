@@ -9,7 +9,7 @@ Robert Nystrom's book [Crafting Interpreters](https://craftinginterpreters.com) 
 - [x] Variable declarations
 - [x] Local scopes
 - [ ] Control flow
-  - [ ] If statements
+  - [x] If statements
   - [ ] Loops
     - [ ] For
     - [ ] While
