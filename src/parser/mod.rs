@@ -96,11 +96,11 @@ impl Parser {
     }
 
     fn if_statement(&mut self) -> Result<Stmt> {
-        self.advance().expect("expected If token");
+        self.consume(If, "expected an 'if' keyword")?;
 
-        self.consume(LeftParen, "expected '(' after if.")?;
+        self.consume(LeftParen, "expected '(' after if")?;
         let condition = self.expression()?;
-        self.consume(RightParen, "expected ')' after if condition.")?;
+        self.consume(RightParen, "expected ')' after if condition")?;
 
         let then_branch = Box::new(self.statement()?);
         let else_branch = if self.matches_any([Else]) {
