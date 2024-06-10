@@ -44,7 +44,7 @@ impl Interpreter {
 
     pub fn interpret(&mut self, statements: Vec<Stmt>) {
         for stmt in statements {
-            if let Err(e) = self.execute(stmt) {
+            if let Err(e) = self.execute(&stmt) {
                 self.error_reporters
                     .iter()
                     .for_each(|reporter| reporter.report_err(&e))
@@ -52,7 +52,7 @@ impl Interpreter {
         }
     }
 
-    pub fn execute(&mut self, stmt: Stmt) -> Result<()> {
+    pub fn execute(&mut self, stmt: &Stmt) -> Result<()> {
         match stmt {
             Stmt::Block(stmts) => {
                 self.environment.enter_new_scope();
@@ -74,9 +74,9 @@ impl Interpreter {
                 else_branch: else_body,
             } => {
                 if self.evaluate(condition)?.is_truthy() {
-                    self.execute(*then_body)?;
+                    self.execute(then_body)?;
                 } else if let Some(else_body) = else_body {
-                    self.execute(*else_body)?;
+                    self.execute(else_body)?;
                 }
             }
             Stmt::Print(expr) => println!("{}", self.evaluate(expr)?.stringify()),
@@ -89,20 +89,26 @@ impl Interpreter {
                 };
 
                 let initial_value = initializer
+                    .as_ref()
                     .map(|expr| self.evaluate(expr))
                     .transpose()?
                     .unwrap_or(Value::Nil); // Uninitialized variables default to `nil`
 
                 self.environment
                     .define(name, initial_value)
-                    .map_err(|env_err| RuntimeError::from_env_err(env_err, name_token))?;
+                    .map_err(|env_err| RuntimeError::from_env_err(env_err, name_token.clone()))?;
+            }
+            Stmt::While { condition, body } => {
+                while self.evaluate(&condition)?.is_truthy() {
+                    self.execute(&body)?;
+                }
             }
         }
 
         Ok(())
     }
 
-    fn evaluate(&mut self, expr: Expr) -> Result<Value> {
+    fn evaluate(&mut self, expr: &Expr) -> Result<Value> {
         let value = match expr {
             Expr::Assign {
                 name: name_token,
@@ -110,16 +116,16 @@ impl Interpreter {
             } => {
                 let name = {
                     let TokenType::Identifier(ref name) = name_token.token_type else {
-                        return Err(RuntimeError::InvalidAssignTarget(name_token));
+                        return Err(RuntimeError::InvalidAssignTarget(name_token.clone()));
                     };
 
                     name
                 };
 
-                let value = self.evaluate(*value)?;
+                let value = self.evaluate(value)?;
                 self.environment
                     .assign(name.to_owned(), value.clone())
-                    .map_err(|env_err| RuntimeError::from_env_err(env_err, name_token))?;
+                    .map_err(|env_err| RuntimeError::from_env_err(env_err, name_token.clone()))?;
 
                 value
             }
@@ -128,14 +134,14 @@ impl Interpreter {
                 operator,
                 right,
             } => {
-                let left = self.evaluate(*left)?;
-                let right = self.evaluate(*right)?;
+                let left = self.evaluate(left)?;
+                let right = self.evaluate(right)?;
 
-                self.evaluate_binary_expression(left, right, operator)?
+                self.evaluate_binary_expression(left, right, operator.clone())?
             }
-            Expr::Grouping { inner } => self.evaluate(*inner)?,
-            Expr::Literal { value } => value,
-            Expr::Unary { operator, right } => self.evaluate_unary_expression(operator, *right)?,
+            Expr::Grouping { inner } => self.evaluate(inner)?,
+            Expr::Literal { value } => value.clone(),
+            Expr::Unary { operator, right } => self.evaluate_unary_expression(operator, right)?,
             Expr::Variable { name: name_token } => {
                 let name = {
                     let TokenType::Identifier(ref name) = name_token.token_type else {
@@ -148,14 +154,14 @@ impl Interpreter {
                 self.environment
                     .get(name)
                     .cloned()
-                    .map_err(|env_err| RuntimeError::from_env_err(env_err, name_token))?
+                    .map_err(|env_err| RuntimeError::from_env_err(env_err, name_token.clone()))?
             }
         };
 
         Ok(value)
     }
 
-    fn evaluate_unary_expression(&mut self, operator: Operator, rhs: Expr) -> Result<Value> {
+    fn evaluate_unary_expression(&mut self, operator: &Operator, rhs: &Expr) -> Result<Value> {
         match operator.operator_type {
             OperatorType::Minus => {
                 let rhs = self.evaluate(rhs)?;
@@ -164,7 +170,7 @@ impl Interpreter {
                     Ok(Value::Number(-number))
                 } else {
                     Err(RuntimeError::InvalidUnaryOperatorForValue {
-                        operator,
+                        operator: operator.clone(),
                         value: rhs,
                     })
                 }
@@ -172,7 +178,7 @@ impl Interpreter {
             OperatorType::Bang => todo!(),
 
             // Illegal unary operators (for now)
-            _ => Err(RuntimeError::InvalidUnaryOperator(operator)),
+            _ => Err(RuntimeError::InvalidUnaryOperator(operator.clone())),
         }
     }
 

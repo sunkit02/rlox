@@ -70,6 +70,7 @@ impl Parser {
             Print => self.print_statement(),
             LeftBrace => self.block(),
             If => self.if_statement(),
+            While => self.while_statement(),
             _ => self.expression_statement(),
         }
     }
@@ -115,6 +116,18 @@ impl Parser {
             then_branch,
             else_branch,
         })
+    }
+
+    fn while_statement(&mut self) -> Result<Stmt> {
+        self.consume(While, "expected a 'while' keyword")?;
+
+        self.consume(LeftParen, "expected '(' after while")?;
+        let condition = self.expression()?;
+        self.consume(RightParen, "expected ')' after condition")?;
+
+        let body = Box::new(self.statement()?);
+
+        Ok(Stmt::While { condition, body })
     }
 
     fn expression_statement(&mut self) -> Result<Stmt> {

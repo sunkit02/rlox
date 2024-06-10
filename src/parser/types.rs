@@ -18,9 +18,13 @@ pub enum Stmt {
         name: Token,
         initializer: Option<Expr>,
     },
+    While {
+        condition: Expr,
+        body: Box<Stmt>,
+    },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     // TODO: Do these later.
     Assign {
@@ -86,7 +90,7 @@ impl Value {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Operator {
     pub operator_type: OperatorType,
     /// Line number in source file
@@ -95,7 +99,7 @@ pub struct Operator {
     pub src_col: usize,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum OperatorType {
     Dot,
 
@@ -237,6 +241,7 @@ impl Display for Stmt {
                     "nil".to_owned()
                 }
             ),
+            Stmt::While { condition, body } => format!("(While {condition} is true => {body})"),
         };
 
         write!(f, "{string}")
