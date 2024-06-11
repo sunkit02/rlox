@@ -399,3 +399,402 @@ fn can_parse_variable_expression() {
 
     assert_eq!(expression, expected);
 }
+
+#[test]
+fn can_parse_if_statements_with_block_body() {
+    let source = "if (condition) { print 1; print 2; }";
+    let mut parser = Parser::new(tokenize(source));
+
+    let stmts = parser.parse().unwrap();
+
+    let expected = Stmt::If {
+        condition: Expr::Variable {
+            name: Token {
+                token_type: TokenType::Identifier("condition".to_owned()),
+                line: 1,
+                col: 13,
+            },
+        },
+        then_branch: Box::new(Stmt::Block(vec![
+            Stmt::Print(Expr::Literal {
+                value: Value::Number(1.0),
+            }),
+            Stmt::Print(Expr::Literal {
+                value: Value::Number(2.0),
+            }),
+        ])),
+        else_branch: None,
+    };
+
+    assert!(stmts.len() == 1);
+    assert_eq!(stmts[0], expected);
+}
+
+#[test]
+fn can_parse_if_statements_with_single_statement_body() {
+    let source = "if (condition) print 1; if (condition) i = 2;";
+    let mut parser = Parser::new(tokenize(source));
+
+    let stmts = parser.parse().unwrap();
+
+    let expected = vec![
+        Stmt::If {
+            condition: Expr::Variable {
+                name: Token {
+                    token_type: TokenType::Identifier("condition".to_owned()),
+                    line: 1,
+                    col: 13,
+                },
+            },
+            then_branch: Box::new(Stmt::Print(Expr::Literal {
+                value: Value::Number(1.0),
+            })),
+            else_branch: None,
+        },
+        Stmt::If {
+            condition: Expr::Variable {
+                name: Token {
+                    token_type: TokenType::Identifier("condition".to_owned()),
+                    line: 1,
+                    col: 37,
+                },
+            },
+            then_branch: Box::new(Stmt::Expression(Expr::Assign {
+                name: Token {
+                    token_type: TokenType::Identifier("i".to_owned()),
+                    line: 1,
+                    col: 40,
+                },
+                value: Box::new(Expr::Literal {
+                    value: Value::Number(2.0),
+                }),
+            })),
+            else_branch: None,
+        },
+    ];
+
+    assert_eq!(stmts, expected);
+}
+
+#[test]
+fn can_parse_nested_if_statements() {
+    let source = "if (condition1) { if (condition2) { if (condition3) print 1; }}";
+    let mut parser = Parser::new(tokenize(source));
+
+    let stmts = parser.parse().unwrap();
+
+    let expected = Stmt::If {
+        condition: Expr::Variable {
+            name: Token {
+                token_type: TokenType::Identifier("condition1".to_owned()),
+                line: 1,
+                col: 14,
+            },
+        },
+        then_branch: Box::new(Stmt::Block(vec![Stmt::If {
+            condition: Expr::Variable {
+                name: Token {
+                    token_type: TokenType::Identifier("condition2".to_owned()),
+                    line: 1,
+                    col: 32,
+                },
+            },
+            then_branch: Box::new(Stmt::Block(vec![Stmt::If {
+                condition: Expr::Variable {
+                    name: Token {
+                        token_type: TokenType::Identifier("condition3".to_owned()),
+                        line: 1,
+                        col: 50,
+                    },
+                },
+                then_branch: Box::new(Stmt::Print(Expr::Literal {
+                    value: Value::Number(1.0),
+                })),
+                else_branch: None,
+            }])),
+            else_branch: None,
+        }])),
+        else_branch: None,
+    };
+
+    assert_eq!(stmts.len(), 1);
+    assert_eq!(stmts[0], expected);
+}
+
+#[test]
+fn can_parse_else_if_statements() {
+    let source = r#"
+    if (condition1) { 
+        print 1; 
+    } else if (condition2) {
+        print 2;
+    } else if (condition3) 
+        print 3;
+    else 
+        print 4;"#;
+
+    let mut parser = Parser::new(tokenize(source));
+
+    let stmts = parser.parse().unwrap();
+
+    let expected = Stmt::If {
+        condition: Expr::Variable {
+            name: Token {
+                token_type: TokenType::Identifier("condition1".to_owned()),
+                line: 2,
+                col: 18,
+            },
+        },
+        then_branch: Box::new(Stmt::Block(vec![Stmt::Print(Expr::Literal {
+            value: Value::Number(1.0),
+        })])),
+        else_branch: Some(Box::new(Stmt::If {
+            condition: Expr::Variable {
+                name: Token {
+                    token_type: TokenType::Identifier("condition2".to_owned()),
+                    line: 4,
+                    col: 25,
+                },
+            },
+            then_branch: Box::new(Stmt::Block(vec![Stmt::Print(Expr::Literal {
+                value: Value::Number(2.0),
+            })])),
+            else_branch: Some(Box::new(Stmt::If {
+                condition: Expr::Variable {
+                    name: Token {
+                        token_type: TokenType::Identifier("condition3".to_owned()),
+                        line: 6,
+                        col: 25,
+                    },
+                },
+                then_branch: Box::new(Stmt::Print(Expr::Literal {
+                    value: Value::Number(3.0),
+                })),
+                else_branch: Some(Box::new(Stmt::Print(Expr::Literal {
+                    value: Value::Number(4.0),
+                }))),
+            })),
+        })),
+    };
+
+    assert_eq!(stmts.len(), 1);
+    assert_eq!(stmts[0], expected);
+}
+
+#[test]
+fn can_parse_while_loop_with_block_body() {
+    let source = r#"while (true) { print 1; }"#;
+    let mut parser = Parser::new(tokenize(source));
+
+    let stmts = parser.parse().unwrap();
+
+    let expected = Stmt::While {
+        condition: Expr::Literal {
+            value: Value::Boolean(true),
+        },
+        body: Box::new(Stmt::Block(vec![Stmt::Print(Expr::Literal {
+            value: Value::Number(1.0),
+        })])),
+    };
+
+    assert_eq!(stmts.len(), 1);
+    assert_eq!(stmts[0], expected);
+}
+
+#[test]
+fn can_parse_while_loop_with_single_statement_body() {
+    let source = r#"while (true) print 1;"#;
+    let mut parser = Parser::new(tokenize(source));
+
+    let stmts = parser.parse().unwrap();
+
+    let expected = Stmt::While {
+        condition: Expr::Literal {
+            value: Value::Boolean(true),
+        },
+        body: Box::new(Stmt::Print(Expr::Literal {
+            value: Value::Number(1.0),
+        })),
+    };
+
+    assert_eq!(stmts.len(), 1);
+    assert_eq!(stmts[0], expected);
+}
+
+#[test]
+fn can_parse_for_loop_with_block_body() {
+    let source = r#"for (var i = 0; i < 10; i = i + 1) { print i; }"#;
+    let mut parser = Parser::new(tokenize(source));
+
+    let stmts = parser.parse().unwrap();
+
+    let expected = Stmt::Block(vec![
+        Stmt::Var {
+            name: Token {
+                token_type: TokenType::Identifier("i".to_owned()),
+                line: 1,
+                col: 10,
+            },
+            initializer: Some(Expr::Literal {
+                value: Value::Number(0.0),
+            }),
+        },
+        Stmt::While {
+            condition: Expr::Binary {
+                left: Box::new(Expr::Variable {
+                    name: Token {
+                        token_type: TokenType::Identifier("i".to_owned()),
+                        line: 1,
+                        col: 17,
+                    },
+                }),
+                operator: Operator {
+                    operator_type: OperatorType::Less,
+                    src_line: 1,
+                    src_col: 19,
+                },
+                right: Box::new(Expr::Literal {
+                    value: Value::Number(10.0),
+                }),
+            },
+            body: Box::new(Stmt::Block(vec![
+                Stmt::Print(Expr::Variable {
+                    name: Token {
+                        token_type: TokenType::Identifier("i".to_owned()),
+                        line: 1,
+                        col: 44,
+                    },
+                }),
+                Stmt::Expression(Expr::Assign {
+                    name: Token {
+                        token_type: TokenType::Identifier("i".to_owned()),
+                        line: 1,
+                        col: 25,
+                    },
+                    value: Box::new(Expr::Binary {
+                        left: Box::new(Expr::Variable {
+                            name: Token {
+                                token_type: TokenType::Identifier("i".to_owned()),
+                                line: 1,
+                                col: 29,
+                            },
+                        }),
+                        operator: Operator {
+                            operator_type: OperatorType::Plus,
+                            src_line: 1,
+                            src_col: 31,
+                        },
+                        right: Box::new(Expr::Literal {
+                            value: Value::Number(1.0),
+                        }),
+                    }),
+                }),
+            ])),
+        },
+    ]);
+
+    assert_eq!(stmts.len(), 1);
+    assert_eq!(stmts[0], expected);
+}
+
+#[test]
+fn can_parse_for_loop_with_single_statement_body() {
+    let source = r#"for (var i = 0; i < 10; i = i + 1) print i;"#;
+    let mut parser = Parser::new(tokenize(source));
+
+    let stmts = parser.parse().unwrap();
+
+    let expected = Stmt::Block(vec![
+        Stmt::Var {
+            name: Token {
+                token_type: TokenType::Identifier("i".to_owned()),
+                line: 1,
+                col: 10,
+            },
+            initializer: Some(Expr::Literal {
+                value: Value::Number(0.0),
+            }),
+        },
+        Stmt::While {
+            condition: Expr::Binary {
+                left: Box::new(Expr::Variable {
+                    name: Token {
+                        token_type: TokenType::Identifier("i".to_owned()),
+                        line: 1,
+                        col: 17,
+                    },
+                }),
+                operator: Operator {
+                    operator_type: OperatorType::Less,
+                    src_line: 1,
+                    src_col: 19,
+                },
+                right: Box::new(Expr::Literal {
+                    value: Value::Number(10.0),
+                }),
+            },
+            body: Box::new(Stmt::Block(vec![
+                Stmt::Print(Expr::Variable {
+                    name: Token {
+                        token_type: TokenType::Identifier("i".to_owned()),
+                        line: 1,
+                        col: 42,
+                    },
+                }),
+                Stmt::Expression(Expr::Assign {
+                    name: Token {
+                        token_type: TokenType::Identifier("i".to_owned()),
+                        line: 1,
+                        col: 25,
+                    },
+                    value: Box::new(Expr::Binary {
+                        left: Box::new(Expr::Variable {
+                            name: Token {
+                                token_type: TokenType::Identifier("i".to_owned()),
+                                line: 1,
+                                col: 29,
+                            },
+                        }),
+                        operator: Operator {
+                            operator_type: OperatorType::Plus,
+                            src_line: 1,
+                            src_col: 31,
+                        },
+                        right: Box::new(Expr::Literal {
+                            value: Value::Number(1.0),
+                        }),
+                    }),
+                }),
+            ])),
+        },
+    ]);
+
+    assert_eq!(stmts.len(), 1);
+    assert_eq!(stmts[0], expected);
+}
+
+#[test]
+fn can_parse_for_loop_with_empty_clauses() {
+    let source = r#"for (;;) print i;"#;
+    let mut parser = Parser::new(tokenize(source));
+
+    let stmts = parser.parse().unwrap();
+
+    // There should be no extra block around the while loop if there is no
+    // initializer in the for loop.
+    let expected = Stmt::While {
+        condition: Expr::Literal {
+            value: Value::Boolean(true),
+        },
+        body: Box::new(Stmt::Print(Expr::Variable {
+            name: Token {
+                token_type: TokenType::Identifier("i".to_owned()),
+                line: 1,
+                col: 16,
+            },
+        })),
+    };
+
+    assert_eq!(stmts.len(), 1);
+    assert_eq!(stmts[0], expected);
+}
