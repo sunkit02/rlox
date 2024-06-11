@@ -26,4 +26,7 @@ pub enum ParserError {
         token_type: TokenType,
         message: String,
     },
+
+    #[error("unexpected {}, expected {}", .got, .expected)]
+    UnexpectedLanguageComponent { expected: String, got: String },
 }

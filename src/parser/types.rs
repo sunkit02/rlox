@@ -24,6 +24,29 @@ pub enum Stmt {
     },
 }
 
+impl Stmt {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Stmt::Block(_) => "block",
+            Stmt::Expression(_) => "expression statement",
+            Stmt::If {
+                condition: _,
+                then_branch: _,
+                else_branch: _,
+            } => "if statement",
+            Stmt::Print(_) => "print statement",
+            Stmt::Var {
+                name: _,
+                initializer: _,
+            } => "variable declaration",
+            Stmt::While {
+                condition: _,
+                body: _,
+            } => "while loop",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     // TODO: Do these later.

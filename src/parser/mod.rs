@@ -36,10 +36,6 @@ impl Parser {
 
     fn declaration(&mut self) -> Result<Stmt> {
         if self.matches_any([Var]) {
-            self.advance().ok_or(ParserError::UnexpectedEndOfTokens)?;
-
-            debug_assert!(self.peek().map(|token| token.is_identifier()) == Some(true));
-
             self.var_declaration().inspect_err(|_| self.synchronize())
         } else {
             self.statement()
@@ -47,6 +43,10 @@ impl Parser {
     }
 
     fn var_declaration(&mut self) -> Result<Stmt> {
+        self.consume(Var, "expected a 'var' keyword")?;
+
+        debug_assert!(self.peek().map(|token| token.is_identifier()) == Some(true));
+
         // TODO: Fix this ugly little hack to get Identifiers to work.
         // The PartialEq impl for TokenType should not be broken and ignore the
         // value held by the variant.
@@ -71,6 +71,7 @@ impl Parser {
             LeftBrace => self.block(),
             If => self.if_statement(),
             While => self.while_statement(),
+            For => self.for_statement(),
             _ => self.expression_statement(),
         }
     }
@@ -128,6 +129,84 @@ impl Parser {
         let body = Box::new(self.statement()?);
 
         Ok(Stmt::While { condition, body })
+    }
+
+    /// Tries to parse out a for loop and desugers that for loop into a [Stmt::Block]
+    /// containing the initializer part of the for loop declaration and a while loop ([Stmt::While]).
+    ///
+    /// Syntax expected: for ( initializer:<Stmt::Var> ; condition<Expr> ; increment<Expr> ) body<Stmt::Block | Stmt::Expression | Stmt::Print>
+    ///
+    /// The increment part of the for loop will be appended to the end of the loop's body.
+    fn for_statement(&mut self) -> Result<Stmt> {
+        self.consume(For, "expected a 'for' keyword")?;
+        self.consume(LeftParen, "expected '(' after while")?;
+
+        // Parse out initializer
+        let initializer = if self.matches_any([Semicolon]) {
+            self.consume(Semicolon, "expected a ';' after loop initalizer")?;
+            None
+        } else if self.matches_any([Var]) {
+            Some(self.var_declaration()?)
+        } else {
+            Some(self.expression_statement()?)
+        };
+
+        // Parse out condition
+        let condition = if !self.matches_any([Semicolon]) {
+            self.expression()?
+        } else {
+            Expr::Literal {
+                value: Value::Boolean(true),
+            }
+        };
+        self.consume(Semicolon, "expected a ';' after loop condition")?;
+
+        // Parse out increment
+        let increment = if !self.matches_any([RightParen]) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+        self.consume(RightParen, "expected ')' after loop increment")?;
+
+        // Parse out body
+        let body = self.statement()?;
+
+        // Insert increment at the end of the body if it exists
+        let body = if let Some(increment) = increment {
+            match body {
+                Stmt::Block(mut stmts) => {
+                    stmts.push(Stmt::Expression(increment));
+                    Stmt::Block(stmts)
+                }
+                Stmt::Expression(_) | Stmt::Print(_) => {
+                    Stmt::Block(vec![body, Stmt::Expression(increment)])
+                }
+                _ => {
+                    return Err(ParserError::UnexpectedLanguageComponent {
+                        expected: "a block, a print statement, or an expression statement"
+                            .to_owned(),
+                        got: body.name().to_string(),
+                    })
+                }
+            }
+        } else {
+            body
+        };
+
+        let desugared_for_loop = Stmt::While {
+            condition,
+            body: Box::new(body),
+        };
+
+        // Create block wrapping the while loop if an initializer exists
+        let desugared_for_loop = if let Some(initializer) = initializer {
+            Stmt::Block(vec![initializer, desugared_for_loop])
+        } else {
+            desugared_for_loop
+        };
+
+        Ok(desugared_for_loop)
     }
 
     fn expression_statement(&mut self) -> Result<Stmt> {

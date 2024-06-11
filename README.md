@@ -8,11 +8,11 @@ Robert Nystrom's book [Crafting Interpreters](https://craftinginterpreters.com) 
 - [x] Arithmetic
 - [x] Variable declarations
 - [x] Local scopes
-- [ ] Control flow
+- [x] Control flow
   - [x] If statements
-  - [ ] Loops
-    - [ ] For
-    - [ ] While
+  - [x] Loops
+    - [x] For
+    - [x] While
 - [ ] Functions
   - [ ] Normal functions
   - [ ] Closures
@@ -23,3 +23,4 @@ Robert Nystrom's book [Crafting Interpreters](https://craftinginterpreters.com) 
 ## Implementation Differences
 
 - The number 0 is considered falsy in this implementation rather than truthy as in the book's implementation.
+- Only allows a block, a print statement, or an expression statement as the loop body rather than any statement.
