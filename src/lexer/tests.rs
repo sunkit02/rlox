@@ -2,7 +2,7 @@ use super::*;
 
 #[test]
 fn can_scan_positive_numbers() {
-    let source = "0 0.5 1 2.5 3.14159";
+    let source = "0 0.5 1 2.5 3.45678";
     let lexer = Lexer::new(source);
 
     let tokens = lexer.scan_all_tokens();
@@ -28,7 +28,7 @@ fn can_scan_positive_numbers() {
             col: 11,
         }),
         Ok(Token {
-            token_type: TokenType::Number(3.14159),
+            token_type: TokenType::Number(3.45678),
             line: 1,
             col: 19,
         }),
@@ -40,7 +40,7 @@ fn can_scan_positive_numbers() {
 }
 #[test]
 fn can_scan_negative_numbers() {
-    let source = "-0.5 -1 -2.5 -3.14159";
+    let source = "-0.5 -1 -2.5 -3.45678";
     let lexer = Lexer::new(source);
 
     let tokens = lexer.scan_all_tokens();
@@ -81,7 +81,7 @@ fn can_scan_negative_numbers() {
             col: 14,
         }),
         Ok(Token {
-            token_type: TokenType::Number(3.14159),
+            token_type: TokenType::Number(3.45678),
             line: 1,
             col: 21,
         }),

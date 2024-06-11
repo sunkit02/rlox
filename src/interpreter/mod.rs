@@ -99,8 +99,8 @@ impl Interpreter {
                     .map_err(|env_err| RuntimeError::from_env_err(env_err, name_token.clone()))?;
             }
             Stmt::While { condition, body } => {
-                while self.evaluate(&condition)?.is_truthy() {
-                    self.execute(&body)?;
+                while self.evaluate(condition)?.is_truthy() {
+                    self.execute(body)?;
                 }
             }
         }

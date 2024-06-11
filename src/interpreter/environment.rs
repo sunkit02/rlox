@@ -54,8 +54,8 @@ impl Environment {
     /// This method returns an error when the variable `name` has not been defined in the current scope
     /// or any of its enclosing scopes.
     pub fn assign(&mut self, name: String, value: Value) -> Result<(), EnvironmentError> {
-        fn assign_recur<'a>(
-            env: &'a mut dyn AsMut<Environment>,
+        fn assign_recur(
+            env: &mut dyn AsMut<Environment>,
             name: String,
             value: Value,
         ) -> Result<(), EnvironmentError> {
@@ -91,16 +91,15 @@ impl Environment {
 
             if !env.values.contains_key(name) {
                 if let Some(ref enclosing) = env.enclosing {
-                    return Ok(get_recur(enclosing, name)?);
+                    return get_recur(enclosing, name);
                 } else {
                     return Err(EnvironmentError::UndefinedVariable(name.to_owned()));
                 }
             }
 
-            Ok(env
-                .values
+            env.values
                 .get(name)
-                .ok_or_else(|| EnvironmentError::UndefinedVariable(name.to_owned()))?)
+                .ok_or_else(|| EnvironmentError::UndefinedVariable(name.to_owned()))
         }
 
         get_recur(self, name)
@@ -130,21 +129,10 @@ impl Environment {
             .enclosing
             .take()
             .map(|environemnt| *environemnt)
-            .ok_or_else(|| EnvironmentError::ExitingGlobalScope)?;
+            .ok_or(EnvironmentError::ExitingGlobalScope)?;
 
         // Replace the current scope with the enclosing scope and return the current scope.
         Ok(mem::replace(self, enclosing))
-    }
-
-    /// Same as [`enter_new_scope`] except the new scope is provided by `new_scope`. This method is
-    /// used to traverse up and down the stack of scopes when searching for variable definitions
-    /// and values.
-    fn enter_scope(&mut self, mut new_scope: Environment) {
-        let enclosing = mem::take(self);
-
-        new_scope.enclosing = Some(Box::new(enclosing));
-
-        *self = new_scope;
     }
 }
 

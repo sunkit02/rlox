@@ -249,7 +249,7 @@ impl Display for Stmt {
                 else_branch: else_body,
             } => {
                 let else_body = if let Some(body) = else_body {
-                    format!(" else {}", body.to_string())
+                    format!(" else {}", body)
                 } else {
                     "".to_owned()
                 };
